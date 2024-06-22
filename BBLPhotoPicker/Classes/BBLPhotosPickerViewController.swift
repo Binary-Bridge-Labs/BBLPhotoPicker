@@ -187,7 +187,9 @@ open class BBLPhotosPickerViewController: UIViewController {
     @objc open var handleNoCameraPermissions: ((BBLPhotosPickerViewController) -> Void)? = nil
     @objc open var dismissCompletion: (() -> Void)? = nil
     private var completionWithPHAssets: (([PHAsset]) -> Void)? = nil
+    private var didChangeSelectedPHAssets: ((BBLPhotosPickerViewController, [PHAsset]) -> Void)? = nil
     private var completionWithBBLPHAssets: (([BBLPHAsset]) -> Void)? = nil
+    private var didChangeSelectedBBLPHAsset: ((BBLPhotosPickerViewController, [BBLPHAsset]) -> Void)? = nil
     private var didCancel: (() -> Void)? = nil
     
     private var collections = [BBLAssetsCollection]()
@@ -214,15 +216,21 @@ open class BBLPhotosPickerViewController: UIViewController {
         super.init(nibName: "BBLPhotosPickerViewController", bundle: BBLBundle.bundle())
     }
     
-    @objc convenience public init(withPHAssets: (([PHAsset]) -> Void)? = nil, didCancel: (() -> Void)? = nil) {
+    @objc convenience public init(withPHAssets: (([PHAsset]) -> Void)? = nil,
+                                  didChangeSelectedPHAssets: ((BBLPhotosPickerViewController, [PHAsset]) -> Void)? = nil,
+                                  didCancel: (() -> Void)? = nil) {
         self.init()
         self.completionWithPHAssets = withPHAssets
+        self.didChangeSelectedPHAssets = didChangeSelectedPHAssets
         self.didCancel = didCancel
     }
     
-    convenience public init(withBBLPHAssets: (([BBLPHAsset]) -> Void)? = nil, didCancel: (() -> Void)? = nil) {
+    convenience public init(withBBLPHAssets: (([BBLPHAsset]) -> Void)? = nil,
+                            didChangeSelectedBBLPHAssets: ((BBLPhotosPickerViewController, [BBLPHAsset]) -> Void)? = nil,
+                            didCancel: (() -> Void)? = nil) {
         self.init()
         self.completionWithBBLPHAssets = withBBLPHAssets
+        self.didChangeSelectedBBLPHAsset = didChangeSelectedBBLPHAssets
         self.didCancel = didCancel
     }
     
@@ -711,6 +719,8 @@ extension BBLPhotosPickerViewController: UIImagePickerControllerDelegate, UINavi
                     result.selectedOrder = self.selectedAssets.count + 1
                     result.isSelectedFromCamera = true
                     self.selectedAssets.append(result)
+                    self.didChangeSelectedPHAssets?(self, [asset])
+                    self.didChangeSelectedBBLPHAsset?(self, [result])
                     self.logDelegate?.selectedPhoto(picker: self, at: 1)
                 }
             })
@@ -729,6 +739,8 @@ extension BBLPhotosPickerViewController: UIImagePickerControllerDelegate, UINavi
                     result.selectedOrder = self.selectedAssets.count + 1
                     result.isSelectedFromCamera = true
                     self.selectedAssets.append(result)
+                    self.didChangeSelectedPHAssets?(self, [asset])
+                    self.didChangeSelectedBBLPHAsset?(self, [result])
                     self.logDelegate?.selectedPhoto(picker: self, at: 1)
                 }
             }
@@ -1311,6 +1323,8 @@ extension BBLPhotosPickerViewController {
             }
         } else {
         //select
+            self.didChangeSelectedPHAssets?(self, [phAsset])
+            self.didChangeSelectedBBLPHAsset?(self, [asset])
             logDelegate?.selectedPhoto(picker: self, at: indexPath.row)
             guard !maxCheck(), canSelect(phAsset: phAsset) else { return }
             
